@@ -43,7 +43,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref ChatMessagesTable
-          MODEL_ID: "anthropic.claude-v2" # Do research on the best model to use
+          MODEL_ID: "anthropic.claude-v3" # Do research on the best model to use
 
   ChatMessagesTable:
     Type: AWS::DynamoDB::Table
