@@ -24,13 +24,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: app.get_messages
+      Handler: app.lambda_handler
       Events:
         ChatPost:
           Type: Api
           Properties:
             Path: /chat
-            Method: post
+            Method: get
             RestApiId: !Ref ChatApi
       Policies:
         - DynamoDBCrudPolicy:

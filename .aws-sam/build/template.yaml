@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Severless-2016-10-31
+Description: Rank & Match's Chatbot API
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 10
+    MemorySize: 256
+Resources:
+  ChatApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: '''OPTIONS,POST'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ChatFunction
+      Handler: app.lambda_handler
+      Events:
+        ChatPost:
+          Type: Api
+          Properties:
+            Path: /chat
+            Method: post
+            RestApiId:
+              Ref: ChatApi
+      Policies:
+      - DynamoDBCrudPolicy: null
+        TableName:
+          Ref: ChatMessagesTable
+      - Statement: null
+        Effect: Allow
+        Action:
+        - bedrock:InvokeModel
+        Resource: '*'
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: ChatMessagesTable
+          MODEL_ID: anthropic.claude-v2
+    Metadata:
+      SamResourceId: ChatFunction
+  ChatMessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ChatMessages
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: timestamp
+        AttributeType: N
+      KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      - AttributeName: timestamp
+        KeyType: RANGE
