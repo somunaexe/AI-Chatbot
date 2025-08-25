@@ -8,25 +8,55 @@ Globals:
     Timeout: 10
     MemorySize: 256
 
-ChatApi:
-  Type: AWS::Serverless::Api
-  Properties:
-    StageName: prod
-    Cors:
-      AllowMethods: "'OPTIONS,POST'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
+Resources:
 
-ChatFunction:
-  Type: AWS::Serverless::Function
-  Properties:
-    CodeUri: src/
-    Handler: app.lambda_handler
-    Events:
-      ChatPost:
-        Type: Api
-        Properties:
-          Path: /chat
-          Method: post
-          RestApiId: !Ref ChatApi
 
+  ChatApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'OPTIONS,POST'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.get_messages
+      Events:
+        ChatPost:
+          Type: Api
+          Properties:
+            Path: /chat
+            Method: post
+            RestApiId: !Ref ChatApi
+      Policies:
+        - DynamoDBCrudPolicy:
+          TableName: !Ref ChatMessagesTable
+        - Statement:
+          Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+          Resource: "*"
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ChatMessagesTable
+          MODEL_ID: "anthropic.claude-v2" # Do research on the best model to use
+
+  ChatMessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ChatMessages
+      BillingMode: PAY_PER_REQUEST  # autoscaling
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
