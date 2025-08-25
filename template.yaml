@@ -40,10 +40,14 @@ Resources:
           Action:
             - bedrock:InvokeModel
           Resource: "*"
+        - AmazonOpenSearchServiceFullAccess:
+          DomainName: !Ref ChatOpenSearch
+        
       Environment:
         Variables:
           TABLE_NAME: !Ref ChatMessagesTable
           MODEL_ID: "anthropic.claude-v3" # Do research on the best model to use
+          DOMAIN_NAME: !Ref ChatOpenSearch
 
   ChatMessagesTable:
     Type: AWS::DynamoDB::Table
@@ -60,3 +64,27 @@ Resources:
           KeyType: HASH
         - AttributeName: timestamp
           KeyType: RANGE
+
+  ChatOpenSearch:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: chat-opensearch
+      EngineVersion: OpenSearch_2.11
+      ClusterConfig:
+        InstanceType: t3.small.search
+        InstanceCount: 1
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+        VolumeType: gp3
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+         - Effect: Allow
+           Principal:
+            AWS: "*"
+           Action: "es:*"
+           Resource: "*"
+
+    
+
